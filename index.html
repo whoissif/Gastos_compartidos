@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split Expenses - Comparte Gastos</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Split Expenses</h1>
+            <p>Gestiona gastos compartidos con tus amigos</p>
+        </header>
+
+        <!-- Sección de Grupo -->
+        <section class="group-section">
+            <h2>Nombre de tu grupo</h2>
+            <input type="text" id="groupName" placeholder="Ej: Viaje a Barcelona">
+            <div class="button-group">
+                <button id="createGroup" class="btn">Crear/Entrar al Grupo</button>
+                <button id="deleteGroup" class="btn btn-delete">Eliminar Grupo</button>
+            </div>
+            <div id="currentGroup" class="current-group"></div>
+        </section>
+
+        <!-- Sección de Participantes -->
+        <section class="participants-section">
+            <h2>Añadir Participantes</h2>
+            <div class="input-group">
+                <input type="text" id="participantName" placeholder="Nombre del participante">
+                <button id="addParticipant" class="btn">Añadir</button>
+            </div>
+            <div id="participantsList" class="participants-list"></div>
+        </section>
+
+        <!-- Sección de Gastos -->
+        <section class="expenses-section">
+            <h2>Registrar Gasto</h2>
+            <div class="form-group">
+                <input type="text" id="expenseDescription" placeholder="Descripción del gasto">
+            </div>
+            <div class="form-group">
+                <input type="number" id="expenseAmount" placeholder="Cantidad (€)" step="0.01">
+            </div>
+            <div class="form-group">
+                <select id="expensePayer">
+                    <option value="">¿Quién pagó?</option>
+                    <!-- Se llenará dinámicamente -->
+                </select>
+            </div>
+            <button id="addExpense" class="btn">Añadir Gasto</button>
+            <div id="expensesList" class="expenses-list"></div>
+        </section>
+
+        <!-- Resultados -->
+        <section class="results-section">
+            <h2>Resultados</h2>
+            <button id="calculate" class="btn">Calcular Deudas</button>
+            <div id="results" class="results"></div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
