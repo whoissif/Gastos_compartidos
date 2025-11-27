@@ -34,6 +34,10 @@ const saveExpenseEditBtn = document.getElementById('saveExpenseEdit');
 const cancelExpenseEditBtn = document.getElementById('cancelExpenseEdit');
 const closeBtn = document.querySelector('.close');
 
+// Elementos de respaldo
+const exportDataBtn = document.getElementById('exportData');
+const importDataBtn = document.getElementById('importData');
+
 // Inicializar la aplicación
 function init() {
     // Cargar datos guardados si existen
@@ -50,6 +54,12 @@ function init() {
     saveExpenseEditBtn.addEventListener('click', saveExpenseEdit);
     cancelExpenseEditBtn.addEventListener('click', closeEditModal);
     closeBtn.addEventListener('click', closeEditModal);
+    
+    // Eventos de respaldo
+    if (exportDataBtn && importDataBtn) {
+        exportDataBtn.addEventListener('click', exportData);
+        importDataBtn.addEventListener('click', importData);
+    }
     
     // Eventos con tecla Enter
     groupNameInput.addEventListener('keypress', (e) => {
@@ -75,12 +85,17 @@ function init() {
         }
     });
     
+    // Verificar compatibilidad del navegador
+    checkBrowserSupport();
+    
     // Actualizar la interfaz
     updateCurrentGroup();
     updateSummary();
     renderParticipants();
     updatePayerSelect();
     renderExpenses();
+    
+    console.log('✅ ExpenseSplitter inicializado correctamente');
 }
 
 // Cargar datos guardados del localStorage
@@ -104,7 +119,9 @@ function saveData() {
     const data = {
         currentGroup,
         participants,
-        expenses
+        expenses,
+        lastModified: new Date().toISOString(),
+        appVersion: '1.0'
     };
     localStorage.setItem('expenseSplitterData', JSON.stringify(data));
 }
@@ -554,6 +571,150 @@ function calculateDebts() {
     });
     
     resultsEl.innerHTML = resultsHTML;
+}
+
+// Verificar compatibilidad del navegador
+function checkBrowserSupport() {
+    if (!window.Blob || !window.URL || !window.FileReader) {
+        console.warn('⚠️ Este navegador no soporta completamente las funciones de exportación/importación');
+        const backupSection = document.querySelector('.backup-section');
+        if (backupSection) {
+            backupSection.innerHTML = `
+                <h3>Respaldo de Datos</h3>
+                <p style="color: #e74c3c;">⚠️ Tu navegador no soporta exportación/importación de archivos. Usa un navegador moderno como Chrome, Firefox o Edge.</p>
+            `;
+        }
+    }
+}
+
+// Función para exportar datos
+function exportData() {
+    if (!currentGroup) {
+        alert('❌ No hay ningún grupo para exportar');
+        return;
+    }
+    
+    if (participants.length === 0 && expenses.length === 0) {
+        alert('⚠️ El grupo está vacío. Añade participantes o gastos antes de exportar.');
+        return;
+    }
+    
+    const dataToExport = {
+        groupName: currentGroup,
+        participants: participants,
+        expenses: expenses,
+        exportedAt: new Date().toISOString(),
+        appVersion: '1.0',
+        source: 'ExpenseSplitter GitHub Pages'
+    };
+    
+    const dataStr = JSON.stringify(dataToExport, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    // Crear enlace de descarga
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `expense-splitter-${currentGroup.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    console.log('✅ Datos exportados:', dataToExport);
+    alert(`✅ Datos exportados correctamente!\n\nArchivo: expense-splitter-${currentGroup.replace(/\s+/g, '-').toLowerCase()}.json`);
+}
+
+// Función para importar datos
+function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+            console.log('⚠️ No se seleccionó ningún archivo');
+            return;
+        }
+        
+        // Verificar que sea un archivo JSON
+        if (!file.name.endsWith('.json')) {
+            alert('❌ Por favor selecciona un archivo JSON válido');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const importedData = JSON.parse(event.target.result);
+                
+                // Validar el formato del archivo
+                if (!importedData.groupName) {
+                    throw new Error('El archivo no contiene un nombre de grupo válido');
+                }
+                
+                if (!Array.isArray(importedData.participants)) {
+                    throw new Error('El archivo no contiene una lista de participantes válida');
+                }
+                
+                if (!Array.isArray(importedData.expenses)) {
+                    throw new Error('El archivo no contiene una lista de gastos válida');
+                }
+                
+                // Mostrar vista previa de lo que se va a importar
+                const confirmMessage = `
+📊 Vista previa de los datos a importar:
+
+• Grupo: ${importedData.groupName}
+• Participantes: ${importedData.participants.length}
+• Gastos: ${importedData.expenses.length}
+• Fecha de exportación: ${importedData.exportedAt ? new Date(importedData.exportedAt).toLocaleString('es-ES') : 'Desconocida'}
+
+⚠️ Esta acción reemplazará todos los datos actuales del grupo.
+¿Deseas continuar?`;
+
+                if (!confirm(confirmMessage)) {
+                    console.log('⚠️ Importación cancelada por el usuario');
+                    return;
+                }
+                
+                // Importar los datos
+                currentGroup = importedData.groupName;
+                participants = [...importedData.participants];
+                expenses = [...importedData.expenses];
+                
+                // Guardar y actualizar la interfaz
+                saveData();
+                updateCurrentGroup();
+                updateSummary();
+                renderParticipants();
+                updatePayerSelect();
+                renderExpenses();
+                
+                console.log('✅ Datos importados:', { 
+                    groupName: currentGroup, 
+                    participants: participants.length, 
+                    expenses: expenses.length 
+                });
+                
+                alert(`✅ Datos importados correctamente!\n\nGrupo: "${currentGroup}"\nParticipantes: ${participants.length}\nGastos: ${expenses.length}`);
+                
+            } catch (error) {
+                console.error('❌ Error importing ', error);
+                alert(`❌ Error al importar el archivo:\n${error.message}\n\nAsegúrate de que es un archivo de respaldo válido de ExpenseSplitter.`);
+            }
+        };
+        
+        reader.onerror = (error) => {
+            console.error('❌ Error reading file:', error);
+            alert('❌ Error al leer el archivo. Por favor, intenta con otro archivo.');
+        };
+        
+        reader.readAsText(file);
+    };
+    
+    input.click();
 }
 
 // Inicializar la aplicación cuando cargue la página
