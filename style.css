@@ -107,6 +107,75 @@ input:focus, select:focus {
     background: #c0392b;
 }
 
+.btn-secondary {
+    background: #95a5a6;
+}
+
+.btn-secondary:hover {
+    background: #7f8c8d;
+}
+
+/* Resumen de Gastos */
+.summary-section {
+    background: #e8f4fc;
+    border: 2px solid #3498db;
+}
+
+.summary-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 10px;
+    background: white;
+    border-radius: 10px;
+    min-width: 120px;
+}
+
+.stat-label {
+    display: block;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.members-spending {
+    margin-top: 15px;
+}
+
+.member-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.member-item:last-child {
+    border-bottom: none;
+}
+
+.member-name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.member-amount {
+    color: #3498db;
+    font-weight: bold;
+}
+
+/* Lista de Gastos */
 .participants-list, .expenses-list {
     margin-top: 15px;
     max-height: 200px;
@@ -124,8 +193,8 @@ input:focus, select:focus {
     align-items: center;
 }
 
-.delete-btn {
-    background: #e74c3c;
+.edit-btn {
+    background: #3498db;
     color: white;
     border: none;
     border-radius: 5px;
@@ -134,8 +203,8 @@ input:focus, select:focus {
     font-size: 0.8rem;
 }
 
-.delete-btn:hover {
-    background: #c0392b;
+.edit-btn:hover {
+    background: #2980b9;
 }
 
 .results {
@@ -176,4 +245,62 @@ input:focus, select:focus {
 
 .current-group.empty {
     display: none;
+}
+
+/* Modal de Edición */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #3498db;
+}
+
+.modal-header h3 {
+    color: #2c3e50;
+    margin: 0;
+}
+
+.close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.modal-footer {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.modal-footer .btn {
+    flex: 1;
+    margin: 0;
 }

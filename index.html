@@ -9,8 +9,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>Split Expenses</h1>
-            <p>Gestiona gastos compartidos con tus amigos</p>
+            <h1>Comparte y disfruta</h1>
+            <p>Gestiona gastos compartidos</p>
         </header>
 
         <!-- Sección de Grupo -->
@@ -22,6 +22,22 @@
                 <button id="deleteGroup" class="btn btn-delete">Eliminar Grupo</button>
             </div>
             <div id="currentGroup" class="current-group"></div>
+        </section>
+
+        <!-- Resumen de Gastos -->
+        <section class="summary-section">
+            <h2>Resumen de Gastos</h2>
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Gasto Total:</span>
+                    <span id="totalAmount" class="stat-value">€0.00</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Participantes:</span>
+                    <span id="participantCount" class="stat-value">0</span>
+                </div>
+            </div>
+            <div id="membersSpending" class="members-spending"></div>
         </section>
 
         <!-- Sección de Participantes -->
@@ -59,6 +75,34 @@
             <button id="calculate" class="btn">Calcular Deudas</button>
             <div id="results" class="results"></div>
         </section>
+    </div>
+
+    <!-- Modal de Edición de Gasto -->
+    <div id="editExpenseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Gasto</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <input type="text" id="editExpenseDescription" placeholder="Descripción del gasto">
+                </div>
+                <div class="form-group">
+                    <input type="number" id="editExpenseAmount" placeholder="Cantidad (€)" step="0.01">
+                </div>
+                <div class="form-group">
+                    <select id="editExpensePayer">
+                        <option value="">¿Quién pagó?</option>
+                        <!-- Se llenará dinámicamente -->
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="saveExpenseEdit" class="btn">Guardar Cambios</button>
+                <button id="cancelExpenseEdit" class="btn btn-secondary">Cancelar</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>

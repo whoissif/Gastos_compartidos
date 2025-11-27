@@ -2,6 +2,7 @@
 let currentGroup = null;
 let participants = [];
 let expenses = [];
+let editingExpenseIndex = -1;
 
 // DOM Elements
 const groupNameInput = document.getElementById('groupName');
@@ -19,6 +20,20 @@ const expensesList = document.getElementById('expensesList');
 const calculateBtn = document.getElementById('calculate');
 const resultsEl = document.getElementById('results');
 
+// Elementos del resumen
+const totalAmountEl = document.getElementById('totalAmount');
+const participantCountEl = document.getElementById('participantCount');
+const membersSpendingEl = document.getElementById('membersSpending');
+
+// Elementos del modal
+const editExpenseModal = document.getElementById('editExpenseModal');
+const editExpenseDescriptionInput = document.getElementById('editExpenseDescription');
+const editExpenseAmountInput = document.getElementById('editExpenseAmount');
+const editExpensePayerSelect = document.getElementById('editExpensePayer');
+const saveExpenseEditBtn = document.getElementById('saveExpenseEdit');
+const cancelExpenseEditBtn = document.getElementById('cancelExpenseEdit');
+const closeBtn = document.querySelector('.close');
+
 // Inicializar la aplicación
 function init() {
     // Cargar datos guardados si existen
@@ -30,6 +45,11 @@ function init() {
     addParticipantBtn.addEventListener('click', addParticipant);
     addExpenseBtn.addEventListener('click', addExpense);
     calculateBtn.addEventListener('click', calculateDebts);
+    
+    // Eventos del modal
+    saveExpenseEditBtn.addEventListener('click', saveExpenseEdit);
+    cancelExpenseEditBtn.addEventListener('click', closeEditModal);
+    closeBtn.addEventListener('click', closeEditModal);
     
     // Eventos con tecla Enter
     groupNameInput.addEventListener('keypress', (e) => {
@@ -48,8 +68,16 @@ function init() {
         if (e.key === 'Enter') addExpense();
     });
     
+    // Cerrar modal al hacer clic fuera
+    window.addEventListener('click', (e) => {
+        if (e.target === editExpenseModal) {
+            closeEditModal();
+        }
+    });
+    
     // Actualizar la interfaz
     updateCurrentGroup();
+    updateSummary();
     renderParticipants();
     updatePayerSelect();
     renderExpenses();
@@ -88,6 +116,7 @@ function resetData() {
     expenses = [];
     saveData();
     updateCurrentGroup();
+    updateSummary();
     renderParticipants();
     renderExpenses();
     resultsEl.innerHTML = '<div class="no-results">Crea un grupo y añade participantes para empezar</div>';
@@ -105,6 +134,7 @@ function createOrEnterGroup() {
     currentGroup = groupName;
     saveData();
     updateCurrentGroup();
+    updateSummary();
     alert(`¡Bienvenido al grupo "${groupName}"!`);
 }
 
@@ -129,6 +159,7 @@ function deleteCurrentGroup() {
     
     // Actualizar la interfaz
     updateCurrentGroup();
+    updateSummary();
     renderParticipants();
     renderExpenses();
     resultsEl.innerHTML = '<div class="no-results">Grupo eliminado. Crea un nuevo grupo para empezar.</div>';
@@ -148,6 +179,51 @@ function updateCurrentGroup() {
     } else {
         currentGroupEl.classList.add('empty');
     }
+}
+
+// Actualizar el resumen de gastos
+function updateSummary() {
+    // Calcular gasto total
+    const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    totalAmountEl.textContent = `€${totalAmount.toFixed(2)}`;
+    
+    // Mostrar número de participantes
+    participantCountEl.textContent = participants.length;
+    
+    // Mostrar gasto por miembro
+    renderMembersSpending();
+}
+
+// Renderizar el gasto por miembro
+function renderMembersSpending() {
+    membersSpendingEl.innerHTML = '';
+    
+    if (participants.length === 0) {
+        membersSpendingEl.innerHTML = '<div class="no-results">No hay participantes</div>';
+        return;
+    }
+    
+    // Calcular gasto por participante
+    const spending = {};
+    participants.forEach(name => spending[name] = 0);
+    
+    expenses.forEach(expense => {
+        spending[expense.payer] += expense.amount;
+    });
+    
+    // Renderizar cada miembro
+    let html = '';
+    participants.forEach(name => {
+        const amount = spending[name];
+        html += `
+            <div class="member-item">
+                <span class="member-name">${name}</span>
+                <span class="member-amount">€${amount.toFixed(2)}</span>
+            </div>
+        `;
+    });
+    
+    membersSpendingEl.innerHTML = html;
 }
 
 // Añadir participante
@@ -173,6 +249,7 @@ function addParticipant() {
     participantNameInput.value = '';
     renderParticipants();
     updatePayerSelect();
+    updateSummary();
     saveData();
 }
 
@@ -216,6 +293,7 @@ function addExpense() {
     expenseDescriptionInput.value = '';
     expenseAmountInput.value = '';
     renderExpenses();
+    updateSummary();
     saveData();
 }
 
@@ -257,6 +335,7 @@ function renderParticipants() {
             renderParticipants();
             updatePayerSelect();
             renderExpenses();
+            updateSummary();
             saveData();
         });
     });
@@ -279,6 +358,28 @@ function updatePayerSelect() {
         option.textContent = name;
         expensePayerSelect.appendChild(option);
     });
+    
+    // Actualizar también el select del modal
+    updateEditPayerSelect();
+}
+
+// Actualizar el select de quién pagó en el modal
+function updateEditPayerSelect() {
+    editExpensePayerSelect.innerHTML = '<option value="">¿Quién pagó?</option>';
+    
+    if (participants.length === 0) {
+        editExpensePayerSelect.disabled = true;
+        return;
+    }
+    
+    editExpensePayerSelect.disabled = false;
+    
+    participants.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        editExpensePayerSelect.appendChild(option);
+    });
 }
 
 // Renderizar gastos
@@ -298,20 +399,78 @@ function renderExpenses() {
                 <strong>${expense.description}</strong><br>
                 ${expense.payer} pagó €${expense.amount.toFixed(2)}
             </div>
-            <button class="delete-btn" data-index="${index}">Eliminar</button>
+            <button class="edit-btn" data-index="${index}">Editar</button>
         `;
         expensesList.appendChild(expenseDiv);
     });
     
-    // Añadir eventos para eliminar gastos
-    document.querySelectorAll('.delete-btn').forEach(btn => {
+    // Añadir eventos para editar gastos
+    document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const index = parseInt(e.target.getAttribute('data-index'));
-            expenses.splice(index, 1);
-            renderExpenses();
-            saveData();
+            openEditModal(index);
         });
     });
+}
+
+// Abrir modal de edición
+function openEditModal(index) {
+    const expense = expenses[index];
+    editingExpenseIndex = index;
+    
+    editExpenseDescriptionInput.value = expense.description;
+    editExpenseAmountInput.value = expense.amount;
+    editExpensePayerSelect.value = expense.payer;
+    
+    editExpenseModal.style.display = 'block';
+}
+
+// Cerrar modal de edición
+function closeEditModal() {
+    editExpenseModal.style.display = 'none';
+    editingExpenseIndex = -1;
+}
+
+// Guardar cambios en el gasto
+function saveExpenseEdit() {
+    if (editingExpenseIndex === -1) {
+        closeEditModal();
+        return;
+    }
+    
+    const description = editExpenseDescriptionInput.value.trim();
+    const amount = parseFloat(editExpenseAmountInput.value);
+    const payer = editExpensePayerSelect.value;
+    
+    if (!description) {
+        alert('Por favor, ingresa una descripción');
+        return;
+    }
+    
+    if (isNaN(amount) || amount <= 0) {
+        alert('Por favor, ingresa una cantidad válida mayor que cero');
+        return;
+    }
+    
+    if (!payer) {
+        alert('Por favor, selecciona quién pagó');
+        return;
+    }
+    
+    // Actualizar el gasto
+    expenses[editingExpenseIndex] = {
+        description,
+        amount,
+        payer
+    };
+    
+    // Guardar y actualizar
+    saveData();
+    renderExpenses();
+    updateSummary();
+    closeEditModal();
+    
+    alert('Gasto actualizado correctamente');
 }
 
 // Calcular deudas
